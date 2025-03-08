@@ -1,6 +1,14 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import TaskForm from '../../components/TaskForm.astro';
+import { getAllTasks } from '../../data/taskStore';
+
+export async function getStaticPaths() {
+  const tasks = getAllTasks();
+  return tasks.map(task => ({
+    params: { id: task.id }
+  }));
+}
 
 const { id } = Astro.params;
 // We'll get the task from localStorage on the client-side
