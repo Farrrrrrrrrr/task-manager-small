@@ -1,0 +1,83 @@
+---
+const { task } = Astro.props;
+---
+
+<div class={`task-item bg-white p-4 rounded-lg shadow-md mb-3 ${task.completed ? 'border-l-4 border-green-500' : ''}`}>
+  <div class="flex items-center justify-between">
+    <div class="flex items-center">
+      <button 
+        class={`complete-task ${task.completed ? 'text-green-500' : 'text-gray-400'} mr-3`} 
+        data-id={task.id}
+      >
+        <span class="material-icons-outlined">
+          {task.completed ? 'check_circle' : 'radio_button_unchecked'}
+        </span>
+      </button>
+      <div>
+        <h3 class={`text-lg font-medium ${task.completed ? 'line-through text-gray-500' : ''}`}>
+          {task.title}
+        </h3>
+        {task.dueDate && (
+          <p class="text-sm text-gray-600">
+            <span class="material-icons-outlined text-sm align-middle">event</span> 
+            Due: {new Date(task.dueDate).toLocaleDateString()}
+          </p>
+        )}
+        <p class="text-sm text-gray-600">{task.description}</p>
+      </div>
+    </div>
+    
+    <div class="flex space-x-2">
+      <a href={`/edit/${task.id}`} class="text-blue-500 hover:text-blue-700">
+        <span class="material-icons-outlined">edit</span>
+      </a>
+      <button class="delete-task text-red-500 hover:text-red-700" data-id={task.id}>
+        <span class="material-icons-outlined">delete</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Direct localStorage manipulation for client-side
+  document.querySelectorAll('.complete-task').forEach(button => {
+    button.addEventListener('click', () => {
+      const taskId = button.getAttribute('data-id');
+      
+      // Get tasks from localStorage
+      const storedTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+      
+      // Update the task
+      const updatedTasks = storedTasks.map(task => 
+        task.id === taskId ? { ...task, completed: !task.completed } : task
+      );
+      
+      // Save back to localStorage
+      localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+      
+      // Refresh the page to show changes
+      window.location.reload();
+    });
+  });
+
+  // Delete task buttons
+  document.querySelectorAll('.delete-task').forEach(button => {
+    button.addEventListener('click', () => {
+      if (confirm('Are you sure you want to delete this task?')) {
+        const taskId = button.getAttribute('data-id');
+        
+        // Get tasks from localStorage
+        const storedTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+        
+        // Filter out the deleted task
+        const updatedTasks = storedTasks.filter(task => task.id !== taskId);
+        
+        // Save back to localStorage
+        localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+        
+        // Refresh the page to show changes
+        window.location.reload();
+      }
+    });
+  });
+</script>

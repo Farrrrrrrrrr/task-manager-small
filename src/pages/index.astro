@@ -1,0 +1,121 @@
+---
+import Layout from '../layouts/Layout.astro';
+import TaskItem from '../components/TaskItem.astro';
+// Remove import { getAllTasks } from '../data/taskStore';
+
+// We'll handle tasks on client-side
+const tasks = [];  // Empty array for initial render
+---
+
+<Layout title="Task Manager">
+  <h1 class="text-2xl font-bold mb-6">My Tasks</h1>
+  
+  <div class="mb-8">
+    <div class="flex justify-between mb-4">
+      <h2 class="text-xl font-semibold">Task List</h2>
+      <a href="/add" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+        <span class="material-icons-outlined align-middle">add</span> Add New Task
+      </a>
+    </div>
+    
+    <div id="task-container">
+      <!-- Tasks will be rendered here via client-side JavaScript -->
+      <div class="bg-white p-8 rounded-lg shadow text-center">
+        <span class="material-icons-outlined text-5xl text-gray-400 mb-2">task</span>
+        <p class="text-xl text-gray-500">Loading tasks...</p>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  // Client-side JavaScript to fetch and render tasks from localStorage
+  const taskContainer = document.getElementById('task-container');
+  
+  // Function to render tasks
+  function renderTasks() {
+    // Get tasks from localStorage
+    const tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+    
+    // Generate HTML
+    if (tasks.length === 0) {
+      taskContainer.innerHTML = `
+        <div class="bg-white p-8 rounded-lg shadow text-center">
+          <span class="material-icons-outlined text-5xl text-gray-400 mb-2">task</span>
+          <p class="text-xl text-gray-500">No tasks yet. Create your first task to get started!</p>
+          <a href="/add" class="mt-4 inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+            <span class="material-icons-outlined align-middle">add</span> Create Task
+          </a>
+        </div>
+      `;
+    } else {
+      const taskHTML = tasks.map(task => `
+        <div class="task-item bg-white p-4 rounded-lg shadow-md mb-3 ${task.completed ? 'border-l-4 border-green-500' : ''}">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <button 
+                class="complete-task ${task.completed ? 'text-green-500' : 'text-gray-400'} mr-3" 
+                data-id="${task.id}"
+              >
+                <span class="material-icons-outlined">
+                  ${task.completed ? 'check_circle' : 'radio_button_unchecked'}
+                </span>
+              </button>
+              <div>
+                <h3 class="text-lg font-medium ${task.completed ? 'line-through text-gray-500' : ''}">
+                  ${task.title}
+                </h3>
+                ${task.dueDate ? `
+                  <p class="text-sm text-gray-600">
+                    <span class="material-icons-outlined text-sm align-middle">event</span> 
+                    Due: ${new Date(task.dueDate).toLocaleDateString()}
+                  </p>
+                ` : ''}
+                <p class="text-sm text-gray-600">${task.description || ''}</p>
+              </div>
+            </div>
+            
+            <div class="flex space-x-2">
+              <a href="/edit/${task.id}" class="text-blue-500 hover:text-blue-700">
+                <span class="material-icons-outlined">edit</span>
+              </a>
+              <button class="delete-task text-red-500 hover:text-red-700" data-id="${task.id}">
+                <span class="material-icons-outlined">delete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      
+      taskContainer.innerHTML = `<div class="task-list">${taskHTML}</div>`;
+      
+      // Add event listeners
+      document.querySelectorAll('.complete-task').forEach(button => {
+        button.addEventListener('click', () => {
+          const taskId = button.getAttribute('data-id');
+          const storedTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+          const updatedTasks = storedTasks.map(task => 
+            task.id === taskId ? { ...task, completed: !task.completed } : task
+          );
+          localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+          renderTasks();
+        });
+      });
+      
+      document.querySelectorAll('.delete-task').forEach(button => {
+        button.addEventListener('click', () => {
+          if (confirm('Are you sure you want to delete this task?')) {
+            const taskId = button.getAttribute('data-id');
+            const storedTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+            const updatedTasks = storedTasks.filter(task => task.id !== taskId);
+            localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+            renderTasks();
+          }
+        });
+      });
+    }
+  }
+  
+  // Render tasks when the page loads
+  renderTasks();
+</script>

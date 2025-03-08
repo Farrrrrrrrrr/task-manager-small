@@ -1,0 +1,122 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import TaskForm from '../../components/TaskForm.astro';
+
+const { id } = Astro.params;
+// We'll get the task from localStorage on the client-side
+---
+
+<Layout title="Edit Task">
+  <div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold mb-6">Edit Task</h1>
+    <div id="form-container">
+      <p class="text-center py-4">Loading task...</p>
+    </div>
+  </div>
+</Layout>
+
+<script define:vars={{id}}>
+  const formContainer = document.getElementById('form-container');
+
+  // Get tasks from localStorage
+  const storedTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+  const task = storedTasks.find(task => task.id === id);
+
+  if (!task) {
+    // Task not found, redirect to home
+    window.location.href = '/';
+  } else {
+    // Render the form with task data
+    formContainer.innerHTML = `
+      <form id="taskForm" class="bg-white p-6 rounded-lg shadow-md">
+        <input type="hidden" name="id" value="${task.id}" />
+        
+        <div class="mb-4">
+          <label for="title" class="block text-gray-700 font-medium mb-2">Task Title</label>
+          <input 
+            type="text" 
+            id="title" 
+            name="title" 
+            value="${task.title || ''}"
+            required
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        
+        <div class="mb-4">
+          <label for="description" class="block text-gray-700 font-medium mb-2">Description</label>
+          <textarea 
+            id="description" 
+            name="description" 
+            rows="3" 
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >${task.description || ''}</textarea>
+        </div>
+        
+        <div class="mb-4">
+          <label for="priority" class="block text-gray-700 font-medium mb-2">Priority</label>
+          <select 
+            id="priority" 
+            name="priority" 
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="low" ${task.priority === 'low' ? 'selected' : ''}>Low</option>
+            <option value="medium" ${task.priority === 'medium' || !task.priority ? 'selected' : ''}>Medium</option>
+            <option value="high" ${task.priority === 'high' ? 'selected' : ''}>High</option>
+          </select>
+        </div>
+        
+        <div class="mb-4">
+          <label for="dueDate" class="block text-gray-700 font-medium mb-2">Due Date</label>
+          <input 
+            type="date" 
+            id="dueDate" 
+            name="dueDate" 
+            value="${task.dueDate || ''}"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        
+        <div class="flex justify-between">
+          <a 
+            href="/" 
+            class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+          >
+            Cancel
+          </a>
+          <button 
+            type="submit" 
+            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            Update Task
+          </button>
+        </div>
+      </form>
+    `;
+
+    // Add event listener to the form
+    document.getElementById('taskForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(e.target);
+      const taskData = {
+        title: formData.get('title'),
+        description: formData.get('description'),
+        priority: formData.get('priority'),
+        dueDate: formData.get('dueDate') || null
+      };
+      
+      const taskId = formData.get('id');
+      
+      // Update task in localStorage
+      const storedTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+      const updatedTasks = storedTasks.map(task => 
+        task.id === taskId ? { ...task, ...taskData } : task
+      );
+      localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+      
+      // Redirect back to home
+      window.location.href = '/';
+    });
+  }
+</script>

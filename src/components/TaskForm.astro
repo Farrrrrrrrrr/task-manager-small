@@ -1,0 +1,110 @@
+---
+const { task = {} } = Astro.props;
+const isEditing = Object.keys(task).length > 0;
+---
+
+<form id="taskForm" class="bg-white p-6 rounded-lg shadow-md">
+  <input type="hidden" name="id" value={task.id || ''} />
+  
+  <div class="mb-4">
+    <label for="title" class="block text-gray-700 font-medium mb-2">Task Title</label>
+    <input 
+      type="text" 
+      id="title" 
+      name="title" 
+      value={task.title || ''}
+      required
+      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+  </div>
+  
+  <div class="mb-4">
+    <label for="description" class="block text-gray-700 font-medium mb-2">Description</label>
+    <textarea 
+      id="description" 
+      name="description" 
+      rows="3" 
+      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >{task.description || ''}</textarea>
+  </div>
+  
+  <div class="mb-4">
+    <label for="priority" class="block text-gray-700 font-medium mb-2">Priority</label>
+    <select 
+      id="priority" 
+      name="priority" 
+      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+      <option value="low" selected={task.priority === 'low'}>Low</option>
+      <option value="medium" selected={task.priority === 'medium' || !task.priority}>Medium</option>
+      <option value="high" selected={task.priority === 'high'}>High</option>
+    </select>
+  </div>
+  
+  <div class="mb-4">
+    <label for="dueDate" class="block text-gray-700 font-medium mb-2">Due Date</label>
+    <input 
+      type="date" 
+      id="dueDate" 
+      name="dueDate" 
+      value={task.dueDate || ''}
+      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+  </div>
+  
+  <div class="flex justify-between">
+    <a 
+      href="/" 
+      class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+    >
+      Cancel
+    </a>
+    <button 
+      type="submit" 
+      class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+      {isEditing ? 'Update Task' : 'Add Task'}
+    </button>
+  </div>
+</form>
+
+<script>
+  import { v4 as uuidv4 } from 'uuid';
+  
+  const form = document.getElementById('taskForm');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(form);
+    const taskData = {
+      title: formData.get('title'),
+      description: formData.get('description'),
+      priority: formData.get('priority'),
+      dueDate: formData.get('dueDate') || null
+    };
+    
+    const taskId = formData.get('id');
+    
+    // Get existing tasks from localStorage
+    const storedTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+    
+    if (taskId) {
+      // Update existing task
+      const updatedTasks = storedTasks.map(task => 
+        task.id === taskId ? { ...task, ...taskData } : task
+      );
+      localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+    } else {
+      // Add new task
+      const newTask = {
+        id: uuidv4(),
+        completed: false,
+        createdAt: new Date().toISOString(),
+        ...taskData
+      };
+      localStorage.setItem('tasks', JSON.stringify([newTask, ...storedTasks]));
+    }
+    
+    window.location.href = '/';
+  });
+</script>
